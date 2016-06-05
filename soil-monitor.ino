@@ -6,7 +6,18 @@ Copyright (c) Chris Drumgoole 2016
 http://www.cdrum.com
 https://github.com/cdrum/lazy-gardener
 
-Licensed under Apache License 2.0. See License file.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
 *********************************************************************/
 
 #include <SPI.h>
@@ -40,14 +51,6 @@ Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
  * X: 128 pixels
  * Y: 64 pixels, 8 lines, 8 pixels each
  */
-#define DISPLAY_LINE_1 0
-#define DISPLAY_LINE_2 8
-#define DISPLAY_LINE_3 16
-#define DISPLAY_LINE_4 24
-#define DISPLAY_LINE_5 32
-#define DISPLAY_LINE_6 40
-#define DISPLAY_LINE_7 48
-#define DISPLAY_LINE_8 56
 #define DISPLAY_TEMPERATURE_LINE_X 0
 #define DISPLAY_TEMPERATURE_LINE_Y 0
 #define DISPLAY_SOIL_THRESHOLD_LINE_X 0
@@ -85,52 +88,13 @@ bool pump_state = PUMP_OFF;
 bool pump_active = false;
 bool pump_waiting = false;
 
-// Rotary Encoder
-volatile boolean TurnDetected;
-volatile boolean up;
-volatile int                             virtualPosition    = 0;
-
-const int encoderPinCLK = 2;  // Connected to CLK on KY-040 // see https://www.arduino.cc/en/Reference/AttachInterrupt for acceptable pins based on board type
-const int encoderPinDT = 4;  // Connected to DT on KY-040
-int encoderPosCount = 0; 
-int aLast;  
-int aVal;
-int bVal;
-boolean bCW;
-
-void isr ()  {                    // Interrupt service routine is executed when a HIGH to LOW transition is detected on CLK
-   static unsigned long                lastInterruptTime = 0;
-
-    unsigned long                       interruptTime = millis();
-
-    // If interrupts come faster than 5ms, assume it's a bounce and ignore
-    if (interruptTime - lastInterruptTime > 10) {
-        if (!digitalRead(encoderPinDT)) {
-            virtualPosition = (virtualPosition + 1);
-            moisture_threshold-=10;
-        } else {
-            virtualPosition = virtualPosition - 1;
-            moisture_threshold+=10;
-        }
-    }
-    lastInterruptTime = interruptTime;
-    
-}
-
 /* Setup */
 void setup()   {                
-
-  // Rotary Encoder
-  pinMode (encoderPinCLK,INPUT);
-  pinMode (encoderPinDT,INPUT);
-  attachInterrupt (digitalPinToInterrupt(encoderPinCLK),isr,FALLING);   // (SEE DEFINTION OF encoderPinCLK, should be set to 2)
-
   Serial.begin(9600);
 
   // Start up the library (temperature)
-  //sensors.begin(); 
-
-   
+  sensors.begin(); 
+  
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SSD1306_SWITCHCAPVCC);
   // init done
@@ -217,16 +181,15 @@ void togglePump(bool toggle_command = PUMP_OFF) {
 
 /* Main Loop */
 void loop() {
-  
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  //display.setCursor(DISPLAY_TEMPERATURE_LINE_X, DISPLAY_TEMPERATURE_LINE_Y);
-  //display.print("Temperature: ");
+  display.setCursor(DISPLAY_TEMPERATURE_LINE_X, DISPLAY_TEMPERATURE_LINE_Y);
+  display.print("Temperature: ");
   
-  //sensors.requestTemperatures(); // Send the command to get temperatures
+  sensors.requestTemperatures(); // Send the command to get temperatures
   
-  //display.print(sensors.getTempCByIndex(0)); // Why "byIndex"? You can have more than one IC on the same bus. 0 refers to the first IC on the wire
+  display.print(sensors.getTempCByIndex(0)); // Why "byIndex"? You can have more than one IC on the same bus. 0 refers to the first IC on the wire
   
   int sensorValue = 1023-analogRead(mostureSensor);
 
